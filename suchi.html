@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>To My Friend</title>
+<meta name="description" content="A Friendship Day journey through memories, made just for you.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
+<style>
+/* ============================================================
+   DESIGN TOKENS — "Constellation of Us"
+   Palette: deep-space void + aurora teal/violet/rose + soft gold
+   Type: Fraunces (display, warm serif) / Manrope (body) / JetBrains Mono (data)
+   Signature motif: a hand-drawn constellation line that threads
+   every star-node (timeline stop, memory, quote) into one shape.
+   ============================================================ */
+:root{
+  --void:#05060f;
+  --void-2:#0b0f24;
+  --void-3:#121a3a;
+  --teal:#34e4ea;
+  --violet:#a06bff;
+  --rose:#ff6bb3;
+  --gold:#ffd27a;
+  --ink:#eef0ff;
+  --ink-muted:#9aa0c7;
+  --ink-faint:#5c6390;
+  --glass:rgba(255,255,255,0.055);
+  --glass-brd:rgba(255,255,255,0.14);
+  --glass-brd-hi:rgba(255,255,255,0.28);
+  --shadow-glow:0 0 40px rgba(160,107,255,0.25);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --ease-soft:cubic-bezier(.22,.61,.36,1);
+  --font-display:'Fraunces', 'Georgia', serif;
+  --font-body:'Manrope', -apple-system, sans-serif;
+  --font-mono:'JetBrains Mono', monospace;
+}
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+html{ scroll-behavior:smooth; background:var(--void); }
+body{
+  font-family:var(--font-body);
+  background:var(--void);
+  color:var(--ink);
+  overflow-x:hidden;
+  cursor:none;
+  min-height:100vh;
+}
+a, button{ font-family:inherit; }
+::selection{ background:var(--violet); color:var(--void); }
+::-webkit-scrollbar{ width:8px; }
+::-webkit-scrollbar-track{ background:var(--void); }
+::-webkit-scrollbar-thumb{ background:linear-gradient(var(--teal),var(--violet)); border-radius:8px; }
+ 
+/* ---------- Ambient backdrop shared across the whole page ---------- */
+#bg-canvas{ position:fixed; inset:0; z-index:0; width:100%; height:100%; }
+.aurora-wash{
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(60% 45% at 15% 8%, rgba(52,228,234,0.10), transparent 60%),
+    radial-gradient(55% 50% at 88% 18%, rgba(160,107,255,0.14), transparent 60%),
+    radial-gradient(50% 40% at 50% 95%, rgba(255,107,179,0.10), transparent 60%);
+}
+main{ position:relative; z-index:1; }
+ 
+/* ---------- custom cursor ---------- */
+.cursor-glow{
+  position:fixed; top:0; left:0; width:26px; height:26px; border-radius:50%;
+  border:1px solid var(--glass-brd-hi); pointer-events:none; z-index:9999;
+  transform:translate(-50%,-50%); transition:width .25s var(--ease-out), height .25s var(--ease-out), background .25s;
+  mix-blend-mode:screen;
+}
+.cursor-dot{
+  position:fixed; top:0; left:0; width:6px; height:6px; border-radius:50%;
+  background:var(--teal); box-shadow:0 0 12px 3px var(--teal); pointer-events:none; z-index:9999;
+  transform:translate(-50%,-50%);
+}
+.cursor-glow.active{ width:52px; height:52px; background:rgba(160,107,255,0.12); }
+@media (hover:none){ body{ cursor:auto; } .cursor-glow,.cursor-dot{ display:none; } }
+ 
+/* ---------- ripple ---------- */
+.ripple{
+  position:fixed; border-radius:50%; pointer-events:none; z-index:9998;
+  border:1px solid var(--teal); transform:translate(-50%,-50%);
+  animation:rippleOut .7s var(--ease-out) forwards;
+}
+@keyframes rippleOut{ from{ width:0; height:0; opacity:.8;} to{ width:220px; height:220px; opacity:0; } }
+ 
+/* ---------- scroll progress ---------- */
+#scroll-progress{
+  position:fixed; top:0; left:0; height:3px; z-index:9997;
+  background:linear-gradient(90deg,var(--teal),var(--violet),var(--rose));
+  width:0%; box-shadow:0 0 10px var(--violet);
+}
+ 
+/* ---------- floating glass nav ---------- */
+.glass-nav{
+  position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:500;
+  display:flex; gap:6px; padding:8px; border-radius:999px;
+  background:var(--glass); border:1px solid var(--glass-brd);
+  backdrop-filter:blur(18px) saturate(140%); -webkit-backdrop-filter:blur(18px) saturate(140%);
+  opacity:0; pointer-events:none; transition:opacity .5s var(--ease-out), top .4s;
+}
+.glass-nav.show{ opacity:1; pointer-events:auto; }
+.glass-nav button{
+  background:none; border:none; color:var(--ink-muted); font-size:.68rem; letter-spacing:.06em;
+  padding:8px 12px; border-radius:999px; cursor:none; transition:.3s; text-transform:uppercase; font-weight:600;
+}
+.glass-nav button:hover{ color:var(--void); background:linear-gradient(120deg,var(--teal),var(--violet)); }
+ 
+/* ---------- glass card base ---------- */
+.glass{
+  background:var(--glass);
+  border:1px solid var(--glass-brd);
+  backdrop-filter:blur(20px) saturate(150%);
+  -webkit-backdrop-filter:blur(20px) saturate(150%);
+  border-radius:20px;
+}
+ 
+/* ---------- section shell ---------- */
+section{ position:relative; padding:min(14vh,140px) 6vw; }
+.section-inner{ max-width:1180px; margin:0 auto; position:relative; }
+.eyebrow{
+  font-family:var(--font-mono); font-size:.72rem; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--teal); display:flex; align-items:center; gap:10px; margin-bottom:18px;
+}
+.eyebrow::before{ content:''; width:26px; height:1px; background:linear-gradient(90deg,var(--teal),transparent); }
+h2.section-title{
+  font-family:var(--font-display); font-weight:500; font-size:clamp(2rem,5vw,3.4rem);
+  line-height:1.08; letter-spacing:-.01em; margin-bottom:20px;
+  background:linear-gradient(180deg,var(--ink) 40%, var(--ink-muted));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.section-sub{ color:var(--ink-muted); font-size:1.02rem; max-width:560px; line-height:1.6; margin-bottom:56px; }
+ 
+/* =========================================================
+   1. LANDING
+   ========================================================= */
+#landing{
+  min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; padding:6vh 6vw; position:relative;
+}
+.landing-name-tag{
+  font-family:var(--font-mono); font-size:.75rem; letter-spacing:.3em; text-transform:uppercase;
+  color:var(--ink-faint); margin-bottom:28px; opacity:0;
+}
+.typing-lines{ min-height:180px; display:flex; flex-direction:column; gap:10px; align-items:center; justify-content:center; }
+.typing-line{
+  font-family:var(--font-display); font-weight:400; font-style:italic;
+  font-size:clamp(1.3rem,4vw,2.2rem); color:var(--ink); opacity:0;
+}
+.typing-line .cursor-blink{ display:inline-block; width:2px; background:var(--teal); margin-left:2px; animation:blink 1s step-end infinite; }
+@keyframes blink{ 50%{ opacity:0; } }
+.landing-tagline{
+  font-family:var(--font-display); font-weight:500; font-size:clamp(1.6rem,5vw,2.8rem);
+  margin-top:34px; opacity:0;
+  background:linear-gradient(120deg,var(--gold),var(--rose) 60%,var(--violet));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.begin-btn{
+  margin-top:56px; padding:18px 44px; border-radius:999px; border:1px solid var(--glass-brd-hi);
+  background:var(--glass); color:var(--ink); font-size:.95rem; letter-spacing:.08em; text-transform:uppercase;
+  font-weight:600; cursor:none; position:relative; overflow:hidden; opacity:0;
+  box-shadow:0 0 0 0 rgba(160,107,255,0.4);
+  transition:box-shadow .4s, transform .3s var(--ease-out), background .4s;
+}
+.begin-btn:hover{ transform:translateY(-3px) scale(1.03); box-shadow:0 10px 40px -6px rgba(160,107,255,0.6); background:rgba(255,255,255,0.09); }
+.begin-btn span{ position:relative; z-index:2; }
+.scroll-hint{
+  position:absolute; bottom:36px; left:50%; transform:translateX(-50%);
+  font-family:var(--font-mono); font-size:.65rem; letter-spacing:.2em; color:var(--ink-faint);
+  display:flex; flex-direction:column; align-items:center; gap:8px; opacity:0; text-transform:uppercase;
+}
+.scroll-hint .line{ width:1px; height:28px; background:linear-gradient(var(--teal),transparent); animation:scrollLine 1.8s ease-in-out infinite; }
+@keyframes scrollLine{ 0%{ opacity:0; transform:scaleY(0); transform-origin:top;} 40%{ opacity:1; transform:scaleY(1);} 100%{ opacity:0; transform:scaleY(1);} }
+ 
+/* explosion overlay */
+#explosion-overlay{
+  position:fixed; inset:0; z-index:600; pointer-events:none; background:var(--void); opacity:0;
+}
+ 
+/* =========================================================
+   2. TIMELINE
+   ========================================================= */
+.timeline-track-wrap{ overflow-x:auto; overflow-y:hidden; padding-bottom:30px; scrollbar-width:thin; }
+.timeline-track{
+  display:flex; gap:32px; padding:60px 4px 20px; position:relative; width:max-content;
+}
+.timeline-line{
+  position:absolute; top:30px; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, var(--glass-brd-hi) 8%, var(--glass-brd-hi) 92%, transparent);
+}
+.tl-card{
+  width:280px; flex:0 0 auto; padding:26px 22px; position:relative; opacity:0; transform:translateY(60px);
+  transition:transform .5s var(--ease-out), box-shadow .4s;
+}
+.tl-card:hover{ transform:translateY(-8px) !important; box-shadow:0 24px 60px -20px rgba(160,107,255,0.45); }
+.tl-dot{
+  position:absolute; top:-42px; left:26px; width:12px; height:12px; border-radius:50%;
+  background:var(--teal); box-shadow:0 0 0 4px rgba(52,228,234,0.15), 0 0 18px var(--teal);
+}
+.tl-year{ font-family:var(--font-mono); color:var(--gold); font-size:.85rem; letter-spacing:.1em; }
+.tl-title{ font-family:var(--font-display); font-size:1.35rem; margin:10px 0 8px; }
+.tl-caption{ color:var(--ink-muted); font-size:.9rem; line-height:1.5; }
+.tl-emoji{ position:absolute; top:20px; right:20px; font-size:1.3rem; opacity:.8; }
+ 
+/* =========================================================
+   4. COUNTER
+   ========================================================= */
+.counter-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:14px; }
+@media(max-width:768px){ .counter-grid{ grid-template-columns:repeat(3,1fr); } }
+.counter-cell{ padding:22px 8px; text-align:center; }
+.counter-num{ font-family:var(--font-mono); font-size:clamp(1.4rem,3vw,2.3rem); color:var(--teal); text-shadow:0 0 20px rgba(52,228,234,.5); }
+.counter-label{ margin-top:8px; font-size:.68rem; letter-spacing:.15em; text-transform:uppercase; color:var(--ink-faint); }
+ 
+/* =========================================================
+   5. PERSONALITY FLIP CARDS
+   ========================================================= */
+.flip-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:24px; }
+.flip-card{ perspective:1200px; height:230px; }
+.flip-inner{ position:relative; width:100%; height:100%; transition:transform .7s var(--ease-out); transform-style:preserve-3d; }
+.flip-card:hover .flip-inner, .flip-card.flipped .flip-inner{ transform:rotateY(180deg); }
+.flip-face{
+  position:absolute; inset:0; backface-visibility:hidden; border-radius:20px; padding:22px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:10px;
+}
+.flip-face.back{ transform:rotateY(180deg); }
+.flip-emoji{ font-size:2.4rem; }
+.flip-face.back p{ font-family:var(--font-display); font-style:italic; font-size:1rem; color:var(--ink); }
+ 
+/* =========================================================
+   6. ROAST
+   ========================================================= */
+.roast-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:20px; }
+.roast-card{ padding:24px; text-align:center; opacity:0; transform:rotate(0deg) translateY(30px); }
+.roast-card .emoji{ font-size:1.8rem; display:block; margin-bottom:10px; }
+.roast-card p{ font-size:.98rem; color:var(--ink); font-weight:500; }
+ 
+/* =========================================================
+   7. QUIZ
+   ========================================================= */
+.quiz-box{ max-width:640px; margin:0 auto; padding:44px; text-align:center; }
+.quiz-q{ font-family:var(--font-display); font-size:1.4rem; margin-bottom:26px; min-height:40px; }
+.quiz-opts{ display:flex; flex-wrap:wrap; gap:12px; justify-content:center; }
+.quiz-opt{
+  padding:12px 22px; border-radius:999px; border:1px solid var(--glass-brd); background:transparent; color:var(--ink);
+  cursor:none; font-size:.9rem; transition:.3s;
+}
+.quiz-opt:hover, .quiz-opt.selected{ background:linear-gradient(120deg,var(--teal),var(--violet)); color:var(--void); border-color:transparent; }
+.quiz-progress{ display:flex; gap:6px; justify-content:center; margin-bottom:30px; }
+.quiz-progress span{ width:26px; height:3px; border-radius:2px; background:var(--glass-brd); transition:.3s; }
+.quiz-progress span.done{ background:var(--teal); }
+#quiz-result{ display:none; }
+#quiz-result.show{ display:block; }
+.result-badge{
+  font-family:var(--font-display); font-size:2rem; margin:14px 0;
+  background:linear-gradient(120deg,var(--gold),var(--rose)); -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+ 
+/* =========================================================
+   8. SECRET MESSAGE
+   ========================================================= */
+.secret-wrap{ display:flex; flex-direction:column; align-items:center; text-align:center; }
+.hold-heart{
+  width:110px; height:110px; border-radius:50%; position:relative; cursor:none; user-select:none;
+  display:flex; align-items:center; justify-content:center; font-size:2.6rem;
+  background:var(--glass); border:1px solid var(--glass-brd);
+}
+.hold-heart svg{ position:absolute; inset:0; transform:rotate(-90deg); }
+.hold-heart circle{ fill:none; stroke:url(#heartGrad); stroke-width:4; stroke-linecap:round; stroke-dasharray:314; stroke-dashoffset:314; }
+.hold-hint{ margin-top:18px; font-size:.8rem; color:var(--ink-faint); letter-spacing:.08em; text-transform:uppercase; font-family:var(--font-mono); }
+.letter-box{ max-width:560px; margin-top:40px; padding:40px; text-align:left; opacity:0; height:0; overflow:hidden; }
+.letter-box.show{ opacity:1; height:auto; padding:40px; }
+.letter-text{ font-family:var(--font-display); font-style:italic; font-size:1.1rem; line-height:1.8; white-space:pre-wrap; }
+ 
+/* =========================================================
+   9. MEMORY JAR
+   ========================================================= */
+.jar-wrap{ display:flex; flex-direction:column; align-items:center; }
+.jar{
+  width:220px; height:270px; border-radius:20px 20px 50px 50px; position:relative;
+  border:2px solid var(--glass-brd-hi); background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.08));
+  overflow:hidden; cursor:none;
+}
+.jar-lid{ position:absolute; top:-14px; left:50%; transform:translateX(-50%); width:110px; height:20px; border-radius:8px; background:var(--glass-brd-hi); }
+.jar-note{
+  position:absolute; width:34px; height:24px; background:linear-gradient(120deg,var(--gold),var(--rose));
+  border-radius:4px; opacity:.9; box-shadow:0 0 10px rgba(255,210,122,.4);
+}
+.jar-hint{ margin-top:20px; font-size:.85rem; color:var(--ink-muted); }
+.jar-reveal{ max-width:440px; margin-top:26px; padding:26px 30px; text-align:center; opacity:0; transform:translateY(10px); transition:.4s var(--ease-out); }
+.jar-reveal.show{ opacity:1; transform:translateY(0); }
+.jar-reveal .tag{ font-family:var(--font-mono); font-size:.65rem; letter-spacing:.15em; text-transform:uppercase; color:var(--teal); margin-bottom:10px; display:block; }
+.jar-reveal p{ font-family:var(--font-display); font-style:italic; font-size:1.05rem; }
+ 
+/* =========================================================
+   10. MUSIC PLAYER (floating)
+   ========================================================= */
+.player{
+  position:fixed; bottom:22px; right:22px; z-index:400; padding:12px 16px; border-radius:999px;
+  display:flex; align-items:center; gap:12px; min-width:220px;
+}
+.player button{ background:none; border:none; color:var(--ink); cursor:none; font-size:1.1rem; display:flex; }
+.player .track{ font-size:.72rem; color:var(--ink-muted); font-family:var(--font-mono); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100px; }
+.player .bar{ flex:1; height:3px; background:var(--glass-brd); border-radius:2px; position:relative; cursor:none; }
+.player .bar-fill{ position:absolute; inset:0; width:0%; background:linear-gradient(90deg,var(--teal),var(--violet)); border-radius:2px; }
+ 
+/* =========================================================
+   11. NIGHT SKY
+   ========================================================= */
+#night-sky-section{ min-height:100vh; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+#night-canvas{ position:absolute; inset:0; }
+.night-copy{ position:relative; z-index:2; text-align:center; max-width:560px; padding:0 20px; }
+.night-quote-box{
+  margin-top:20px; min-height:70px; font-family:var(--font-display); font-style:italic; font-size:1.15rem; color:var(--gold); opacity:0; transition:.4s;
+}
+.night-quote-box.show{ opacity:1; }
+ 
+/* =========================================================
+   12. ENDING
+   ========================================================= */
+#ending{ min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; position:relative; }
+.moon{
+  width:120px; height:120px; border-radius:50%; margin-bottom:40px; opacity:0;
+  background:radial-gradient(circle at 35% 35%, #fff, var(--gold) 45%, rgba(255,210,122,0.2) 80%);
+  box-shadow:0 0 90px 20px rgba(255,210,122,0.35);
+}
+.ending-line{ font-family:var(--font-display); font-style:italic; font-size:clamp(1.2rem,3.6vw,1.9rem); opacity:0; margin-bottom:6px; }
+.big-heart{ font-size:3.4rem; margin:34px 0; opacity:0; }
+.final-btn{
+  padding:18px 40px; border-radius:999px; border:1px solid var(--glass-brd-hi); background:var(--glass); color:var(--ink);
+  font-size:.9rem; text-transform:uppercase; letter-spacing:.08em; font-weight:600; cursor:none; opacity:0;
+  transition:.3s;
+}
+.final-btn:hover{ transform:translateY(-3px); box-shadow:0 10px 40px -8px rgba(255,107,179,.5); }
+ 
+/* =========================================================
+   13. FINAL SURPRISE
+   ========================================================= */
+#final-surprise{
+  position:fixed; inset:0; z-index:2000; display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(ellipse at 50% 30%, #1a1035, var(--void) 75%);
+  opacity:0; pointer-events:none; transition:opacity 1.2s var(--ease-out);
+}
+#final-surprise.show{ opacity:1; pointer-events:auto; }
+#final-canvas{ position:absolute; inset:0; }
+.final-msg{ position:relative; z-index:2; text-align:center; max-width:640px; padding:40px; }
+.final-msg p{ font-family:var(--font-display); font-style:italic; font-size:clamp(1.4rem,4vw,2.2rem); line-height:1.5; }
+.final-close{ margin-top:36px; padding:12px 28px; border-radius:999px; border:1px solid var(--glass-brd-hi); background:transparent; color:var(--ink-muted); cursor:none; font-size:.8rem; letter-spacing:.1em; text-transform:uppercase; }
+ 
+/* util reveal */
+.reveal{ opacity:0; transform:translateY(40px); }
+.reveal.in{ opacity:1; transform:translateY(0); transition:opacity .8s var(--ease-out), transform .8s var(--ease-out); }
+ 
+footer{ text-align:center; padding:60px 20px 40px; color:var(--ink-faint); font-size:.75rem; letter-spacing:.05em; font-family:var(--font-mono); }
+</style>
+</head>
+<body>
+ 
+<canvas id="bg-canvas"></canvas>
+<div class="aurora-wash"></div>
+<div class="cursor-glow" id="cursorGlow"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+<div id="scroll-progress"></div>
+ 
+<nav class="glass-nav" id="glassNav">
+  <button data-go="landing">Start</button>
+  <button data-go="timeline">Timeline</button>
+  <button data-go="quiz">Quiz</button>
+  <button data-go="secret">Secret</button>
+  <button data-go="jar">Jar</button>
+  <button data-go="night-sky-section">Sky</button>
+</nav>
+ 
+<div id="explosion-overlay"></div>
+ 
+<main id="main-content">
+ 
+  <!-- ================= 1. LANDING ================= -->
+  <section id="landing">
+    <div class="landing-name-tag" id="greetingTag">Good evening, wherever you are</div>
+    <div class="typing-lines" id="typingLines">
+      <div class="typing-line" data-text="Some people enter our lives..."></div>
+      <div class="typing-line" data-text="...and become our forever family."></div>
+    </div>
+    <div class="landing-tagline" id="landingTagline">This is for someone truly special ❤️</div>
+    <button class="begin-btn" id="beginBtn"><span>Begin the Journey</span></button>
+    <div class="scroll-hint"><span class="line"></span>scroll or click</div>
+  </section>
+ 
+  <!-- ================= 2. TIMELINE ================= -->
+  <section id="timeline">
+    <div class="section-inner">
+      <div class="eyebrow">The story so far</div>
+      <h2 class="section-title">A friendship, mapped in stars</h2>
+      <p class="section-sub">Every year left a mark. Scroll sideways to walk back through them — each one a little star in the same constellation.</p>
+      <div class="timeline-track-wrap">
+        <div class="timeline-track" id="timelineTrack">
+          <!-- cards injected by JS from CONFIG.timeline -->
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- ================= 4. COUNTER ================= -->
+  <section id="counter">
+    <div class="section-inner" style="text-align:center;">
+      <div class="eyebrow" style="justify-content:center;">Still counting</div>
+      <h2 class="section-title">We've been friends for...</h2>
+      <div class="counter-grid glass" style="padding:30px;">
+        <div class="counter-cell"><div class="counter-num" id="cYears">0</div><div class="counter-label">Years</div></div>
+        <div class="counter-cell"><div class="counter-num" id="cMonths">0</div><div class="counter-label">Months</div></div>
+        <div class="counter-cell"><div class="counter-num" id="cDays">0</div><div class="counter-label">Days</div></div>
+        <div class="counter-cell"><div class="counter-num" id="cHours">0</div><div class="counter-label">Hours</div></div>
+        <div class="counter-cell"><div class="counter-num" id="cMinutes">0</div><div class="counter-label">Minutes</div></div>
+        <div class="counter-cell"><div class="counter-num" id="cSeconds">0</div><div class="counter-label">Seconds</div></div>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- ================= 5. PERSONALITY CARDS ================= -->
+  <section id="personality">
+    <div class="section-inner">
+      <div class="eyebrow">Why you're one of a kind</div>
+      <h2 class="section-title">Hover to flip</h2>
+      <div class="flip-grid" id="flipGrid"></div>
+    </div>
+  </section>
+ 
+  <!-- ================= 6. ROAST ================= -->
+  <section id="roast">
+    <div class="section-inner">
+      <div class="eyebrow">Affectionately, though</div>
+      <h2 class="section-title">The roast corner</h2>
+      <p class="section-sub">Every good friendship survives a little teasing.</p>
+      <div class="roast-grid" id="roastGrid"></div>
+    </div>
+  </section>
+ 
+  <!-- ================= 7. QUIZ ================= -->
+  <section id="quiz">
+    <div class="section-inner">
+      <div class="eyebrow" style="justify-content:center;">One quick test</div>
+      <h2 class="section-title" style="text-align:center;">The friendship quiz</h2>
+      <div class="quiz-box glass">
+        <div class="quiz-progress" id="quizProgress"></div>
+        <div id="quizActive">
+          <div class="quiz-q" id="quizQ"></div>
+          <div class="quiz-opts" id="quizOpts"></div>
+        </div>
+        <div id="quiz-result">
+          <div class="result-badge">100% Certified Best Friends</div>
+          <p style="color:var(--ink-muted);">No refunds. No exchanges. Stuck with each other for life.</p>
+          <button class="begin-btn" id="quizReplay" style="margin-top:26px; opacity:1;"><span>Take it again</span></button>
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- ================= 8. SECRET MESSAGE ================= -->
+  <section id="secret">
+    <div class="section-inner secret-wrap">
+      <div class="eyebrow">For your eyes only</div>
+      <h2 class="section-title">This message is locked</h2>
+      <p class="section-sub" style="text-align:center;">Hold the heart for five seconds to unlock it.</p>
+      <button class="hold-heart glass" id="holdHeart" aria-label="Hold to reveal secret message">
+        <svg viewBox="0 0 100 100" width="110" height="110">
+          <defs><linearGradient id="heartGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#34e4ea"/><stop offset="100%" stop-color="#a06bff"/>
+          </linearGradient></defs>
+          <circle cx="50" cy="50" r="46"></circle>
+        </svg>
+        <span id="heartEmoji">🤍</span>
+      </button>
+      <div class="hold-hint" id="holdHint">press and hold</div>
+      <div class="letter-box glass" id="letterBox">
+        <p class="letter-text" id="letterText"></p>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- ================= 9. MEMORY JAR ================= -->
+  <section id="jar">
+    <div class="section-inner jar-wrap">
+      <div class="eyebrow">Shake gently</div>
+      <h2 class="section-title">The memory jar</h2>
+      <div class="jar" id="jarEl">
+        <div class="jar-lid"></div>
+      </div>
+      <div class="jar-hint">Tap the jar to pull out a note</div>
+      <div class="jar-reveal glass" id="jarReveal">
+        <span class="tag" id="jarTag"></span>
+        <p id="jarText"></p>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- ================= 11. NIGHT SKY ================= -->
+  <section id="night-sky-section">
+    <canvas id="night-canvas"></canvas>
+    <div class="night-copy">
+      <div class="eyebrow" style="justify-content:center;">Make a wish</div>
+      <h2 class="section-title">Move your cursor across the sky</h2>
+      <p class="section-sub" style="margin:0 auto;text-align:center;">Click a shooting star to catch a quote about us.</p>
+      <div class="night-quote-box" id="nightQuoteBox"></div>
+    </div>
+  </section>
+ 
+  <!-- ================= 12. ENDING ================= -->
+  <section id="ending">
+    <div class="moon" id="moonEl"></div>
+    <p class="ending-line">Some friendships aren't measured by time...</p>
+    <p class="ending-line">They're measured by moments.</p>
+    <div class="big-heart">💖</div>
+    <button class="final-btn" id="finalSurpriseBtn"><span>One Last Surprise</span></button>
+  </section>
+ 
+  <footer>made with ❤️ &nbsp;·&nbsp; happy friendship day</footer>
+ 
+</main>
+ 
+<div class="player glass">
+  <button id="playBtn" aria-label="Play music">▶</button>
+  <span class="track" id="trackName">Soft Piano — Ambient</span>
+  <div class="bar" id="volBar"><div class="bar-fill" id="volFill"></div></div>
+</div>
+ 
+<div id="final-surprise">
+  <canvas id="final-canvas"></canvas>
+  <div class="final-msg" id="finalMsg"></div>
+</div>
+ 
+<script>
+/* ======================================================================
+   CONFIG — edit everything here to personalize the site.
+   ====================================================================== */
+const CONFIG = {
+  friendName: "Suchi",                 // the friend this is for
+  yourName: "Dharani",                     // your name / signature
+  friendsSinceISO: "2023-11-01T00:00:00", // date friendship began — drives the live counter
+
+  timeline: [
+    { year:"2024", emoji:"👋", title:"The first Intro", text:"I still remember that we talked to each other during our picnic." },
+    { year:"2025", emoji:"🚗", title:"The crazy Memory", text:"Those scooty rides to the university, where I had to narrate the entire syllabus to you, were unforgettable." },
+    { year:"2026", emoji:"🎉", title:"Still going strong", text:"New year, same chaos, same person I'd choose again." },
+  ],
+
+//   gallery: [
+//     { img:"photos/photo1.jpeg", emoji:"🌅", note:"That sunrise we weren't supposed to see because we stayed up too late." },
+//     { img:"", emoji:"🍕", note:"The pizza place that basically knows us by name now." },
+//     { img:"", emoji:"🎢", note:"You screamed louder than me and I have the video to prove it." },
+//     { img:"", emoji:"📸", note:"37 takes for one photo and it was still blurry." },
+//     { img:"", emoji:"🎂", note:"The birthday you pretended to forget. You didn't." },
+//     { img:"", emoji:"🌧️", note:"Stuck in the rain with no umbrella, laughing the whole way home." },
+//     { img:"", emoji:"🎮", note:"The game night that ended in a very serious argument." },
+//     { img:"", emoji:"🏖️", note:"Sand in places sand should never be." },
+//   ],
+
+  personality: [
+    { emoji:"😊", front:"Supportive", back:"From syllabus to breakup talks, you were always there to listen." },
+    { emoji:"😂", front:"Fun", back:"You make every conversation fun, and every gossip session even better" },
+    { emoji:"💪", front:"Strong", back:"You've faced so much, yet you continue to move forward with courage every single day." },
+    { emoji:"❤️", front:"Irreplaceable", back:"There's no version of my story that doesn't have you in it." },
+  ],
+
+  roasts: [
+    "You still owe me Biryani and Chicken Curry",
+    "Photo magi magi halia heigalini",
+    "job hele bulibaku jiba boli kahithilu kebe jiba #varnasi",
+  ],
+
+  quiz: [
+    { q:"Who apologizes first?", opts:["Me","You","Neither of us","Whoever needs the other's Wi-Fi"] },
+    { q:"Who eats more?", opts:["Me","You","It's a tie","Depends who's paying"] },
+    { q:"Who is always late?", opts:["Me","You","Both, honestly","Time isn't real anyway"] },
+    { q:"Who tells worse jokes?", opts:["Me","You","We're equally bad","There are no bad jokes, only bad audiences"] },
+  ],
+
+  secretLetter:
+`Hey, it's me.
+
+Because of you, I slowly came out of my introvert shell. Thank you for making my university life so memorable.
+
+ଆଉ ଏତିକି କହିକି ମୋର ବକ୍ତବ୍ୟ ଶେଷ କରୁଛି। 😄
+
+— ${"Your friend, always"}`,
+
+  jarNotes: [
+    { tag:"sweet compliment", text:"You have a beautiful heart. You genuinely care about people, and that's one of the reasons we became friends. " },
+    { tag:"future promise", text:"One day we're doing that trip we keep talking about. No more 'maybe next year.'" },
+  ],
+
+  nightQuotes: [
+    "A good friend knows all your stories. A best friend helped you write them.",
+    "Some people go to therapists. I have you.",
+    "Friendship isn't a big thing — it's a million little things.",
+    "We didn't choose to become family. We just did.",
+  ],
+
+  finalMessage: "No matter where life takes us,\nthank you for being my friend."
+};
+
+/* ======================================================================
+   UTIL
+   ====================================================================== */
+const $ = (s,ctx=document)=>ctx.querySelector(s);
+const $$ = (s,ctx=document)=>[...ctx.querySelectorAll(s)];
+const isTouch = window.matchMedia('(hover:none)').matches;
+ 
+/* ---------------- custom cursor ---------------- */
+if(!isTouch){
+  const glow = $('#cursorGlow'), dot = $('#cursorDot');
+  let mx=innerWidth/2,my=innerHeight/2, gx=mx, gy=my;
+  window.addEventListener('mousemove', e=>{ mx=e.clientX; my=e.clientY; dot.style.left=mx+'px'; dot.style.top=my+'px'; });
+  (function loop(){ gx += (mx-gx)*0.18; gy += (my-gy)*0.18; glow.style.left=gx+'px'; glow.style.top=gy+'px'; requestAnimationFrame(loop); })();
+  document.addEventListener('mouseover', e=>{ if(e.target.closest('button,a,.jar,.hold-heart,.tl-card')) glow.classList.add('active'); });
+  document.addEventListener('mouseout', e=>{ if(e.target.closest('button,a,.jar,.hold-heart,.tl-card')) glow.classList.remove('active'); });
+}
+ 
+/* ---------------- ripple on click ---------------- */
+document.addEventListener('pointerdown', e=>{
+  const r = document.createElement('div');
+  r.className='ripple'; r.style.left=e.clientX+'px'; r.style.top=e.clientY+'px';
+  document.body.appendChild(r); setTimeout(()=>r.remove(),700);
+});
+ 
+/* ---------------- scroll progress + nav visibility ---------------- */
+const progressBar = $('#scroll-progress');
+const nav = $('#glassNav');
+window.addEventListener('scroll', ()=>{
+  const h = document.documentElement;
+  const pct = (h.scrollTop)/(h.scrollHeight-h.clientHeight)*100;
+  progressBar.style.width = pct+'%';
+  nav.classList.toggle('show', h.scrollTop > innerHeight*0.6);
+});
+$$('.glass-nav button').forEach(b=> b.addEventListener('click', ()=>{
+  const el = document.getElementById(b.dataset.go);
+  if(el) el.scrollIntoView({behavior:'smooth'});
+}));
+ 
+/* ---------------- dynamic greeting ---------------- */
+(function(){
+  const h = new Date().getHours();
+  let g = "Good evening";
+  if(h < 5) g = "Still up this late?";
+  else if(h < 12) g = "Good morning";
+  else if(h < 17) g = "Good afternoon";
+  else if(h < 21) g = "Good evening";
+  else g = "Good night, night owl";
+  $('#greetingTag').textContent = g + `, ${CONFIG.friendName}`;
+})();
+ 
+/* ======================================================================
+   BACKGROUND STARFIELD (persistent, ambient, low-cost)
+   ====================================================================== */
+const bgCanvas = $('#bg-canvas');
+const bgCtx = bgCanvas.getContext('2d');
+let stars = [];
+function sizeBg(){
+  bgCanvas.width = innerWidth; bgCanvas.height = document.documentElement.scrollHeight;
+  const count = Math.min(220, Math.floor((innerWidth*bgCanvas.height)/9000));
+  stars = Array.from({length:count}, ()=>({
+    x: Math.random()*bgCanvas.width, y: Math.random()*bgCanvas.height,
+    r: Math.random()*1.4+0.3, tw: Math.random()*Math.PI*2, sp: Math.random()*0.02+0.005,
+    hue: Math.random()<0.15 ? '160,107,255' : (Math.random()<0.3 ? '255,107,179' : '255,255,255')
+  }));
+}
+sizeBg();
+window.addEventListener('resize', sizeBg);
+function drawBg(){
+  bgCtx.clearRect(0,0,bgCanvas.width,bgCanvas.height);
+  const scrollY = window.scrollY;
+  for(const s of stars){
+    s.tw += s.sp;
+    const alpha = 0.35 + Math.sin(s.tw)*0.35;
+    const py = s.y - scrollY*0.15;
+    if(py < -20 || py > innerHeight+20) continue;
+    bgCtx.beginPath();
+    bgCtx.arc(s.x, py, s.r, 0, Math.PI*2);
+    bgCtx.fillStyle = `rgba(${s.hue},${Math.max(0,alpha)})`;
+    bgCtx.fill();
+  }
+  requestAnimationFrame(drawBg);
+}
+drawBg();
+ 
+/* ======================================================================
+   GENERIC SCROLL REVEAL (IntersectionObserver)
+   ====================================================================== */
+const revealObserver = new IntersectionObserver((entries)=>{
+  entries.forEach(en=>{ if(en.isIntersecting){ en.target.classList.add('in'); revealObserver.unobserve(en.target); } });
+},{ threshold:0.15 });
+function observeReveal(el){ el.classList.add('reveal'); revealObserver.observe(el); }
+ 
+/* ======================================================================
+   1. LANDING — typewriter sequence
+   ====================================================================== */
+function typeLine(el, text, speed=42){
+  return new Promise(resolve=>{
+    el.style.opacity = 1;
+    let i = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor-blink'; cursor.textContent='\u00A0';
+    function step(){
+      el.textContent = text.slice(0,i);
+      el.appendChild(cursor);
+      i++;
+      if(i <= text.length){ setTimeout(step, speed); }
+      else resolve();
+    }
+    step();
+  });
+}
+async function runLandingSequence(){
+  $('#greetingTag').style.transition = 'opacity 1s ease';
+  $('#greetingTag').style.opacity = 1;
+  const lines = $$('.typing-line');
+  await typeLine(lines[0], lines[0].dataset.text);
+  await new Promise(r=>setTimeout(r,300));
+  await typeLine(lines[1], lines[1].dataset.text);
+  await new Promise(r=>setTimeout(r,400));
+  const tagline = $('#landingTagline');
+  tagline.style.transition = 'opacity 1s ease, transform 1s ease';
+  tagline.style.opacity = 1;
+  await new Promise(r=>setTimeout(r,700));
+  const btn = $('#beginBtn');
+  btn.style.transition = 'opacity .8s ease, transform .8s ease';
+  btn.style.opacity = 1;
+  $('.scroll-hint').style.transition = 'opacity 1s ease';
+  $('.scroll-hint').style.opacity = 1;
+}
+window.addEventListener('load', ()=> setTimeout(runLandingSequence, 500));
+ 
+/* explosion transition on "Begin the Journey" */
+$('#beginBtn').addEventListener('click', ()=>{
+  const overlay = $('#explosion-overlay');
+  // burst of particles
+  const burst = document.createElement('canvas');
+  burst.style.cssText='position:fixed;inset:0;z-index:601;pointer-events:none;';
+  burst.width = innerWidth; burst.height = innerHeight;
+  document.body.appendChild(burst);
+  const bctx = burst.getContext('2d');
+  const rect = $('#beginBtn').getBoundingClientRect();
+  const cx = rect.left+rect.width/2, cy = rect.top+rect.height/2;
+  const parts = Array.from({length:120}, ()=>({
+    x:cx, y:cy, a:Math.random()*Math.PI*2, sp:Math.random()*9+3, life:1,
+    hue: Math.random()<0.5 ? '52,228,234' : '160,107,255'
+  }));
+  overlay.style.transition = 'opacity .9s ease';
+  overlay.style.opacity = 0.94;
+  function animBurst(){
+    bctx.clearRect(0,0,burst.width,burst.height);
+    let alive=false;
+    parts.forEach(p=>{
+      if(p.life<=0) return;
+      alive=true;
+      p.x += Math.cos(p.a)*p.sp; p.y += Math.sin(p.a)*p.sp; p.life -= 0.012; p.sp*=0.97;
+      bctx.beginPath(); bctx.arc(p.x,p.y,3*p.life,0,Math.PI*2);
+      bctx.fillStyle = `rgba(${p.hue},${Math.max(p.life,0)})`;
+      bctx.shadowBlur = 14; bctx.shadowColor = `rgba(${p.hue},0.8)`;
+      bctx.fill();
+    });
+    if(alive) requestAnimationFrame(animBurst);
+    else burst.remove();
+  }
+  animBurst();
+  setTimeout(()=>{ overlay.style.opacity = 0; document.getElementById('timeline').scrollIntoView({behavior:'smooth'}); }, 500);
+  setTimeout(()=>{ overlay.style.transition='none'; }, 1500);
+});
+ 
+/* ======================================================================
+   2. TIMELINE
+   ====================================================================== */
+(function buildTimeline(){
+  const track = $('#timelineTrack');
+  track.innerHTML = `<div class="timeline-line"></div>` + CONFIG.timeline.map(t=>`
+    <div class="tl-card glass">
+      <div class="tl-dot"></div>
+      <div class="tl-emoji">${t.emoji}</div>
+      <div class="tl-year">${t.year}</div>
+      <div class="tl-title">${t.title}</div>
+      <div class="tl-caption">${t.text}</div>
+    </div>`).join('');
+  const cards = $$('.tl-card', track);
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){
+        en.target.style.opacity = 1;
+        en.target.style.transform = 'translateY(0)';
+        io.unobserve(en.target);
+      }
+    });
+  }, { root: track.parentElement, threshold:0.3 });
+  cards.forEach((c,i)=>{ c.style.transitionDelay = (i*70)+'ms'; io.observe(c); });
+})();
+ 
+/* ======================================================================
+   4. FRIENDSHIP COUNTER
+   ====================================================================== */
+(function counter(){
+  const since = new Date(CONFIG.friendsSinceISO);
+  function update(){
+    const now = new Date();
+    let diffMs = now - since;
+    const totalSeconds = Math.floor(diffMs/1000);
+    let years = now.getFullYear()-since.getFullYear();
+    let months = now.getMonth()-since.getMonth();
+    let days = now.getDate()-since.getDate();
+    if(days<0){ months--; const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0); days += prevMonth.getDate(); }
+    if(months<0){ years--; months+=12; }
+    const hours = Math.floor((totalSeconds/3600)%24);
+    const minutes = Math.floor((totalSeconds/60)%60);
+    const seconds = totalSeconds%60;
+    $('#cYears').textContent = years;
+    $('#cMonths').textContent = months;
+    $('#cDays').textContent = days;
+    $('#cHours').textContent = String(hours).padStart(2,'0');
+    $('#cMinutes').textContent = String(minutes).padStart(2,'0');
+    $('#cSeconds').textContent = String(seconds).padStart(2,'0');
+  }
+  update();
+  setInterval(update, 1000);
+})();
+ 
+/* ======================================================================
+   5. PERSONALITY FLIP CARDS
+   ====================================================================== */
+(function buildFlip(){
+  const grid = $('#flipGrid');
+  grid.innerHTML = CONFIG.personality.map(p=>`
+    <div class="flip-card">
+      <div class="flip-inner">
+        <div class="flip-face front glass"><div class="flip-emoji">${p.emoji}</div><div style="font-weight:600;">${p.front}</div></div>
+        <div class="flip-face back glass"><p>${p.back}</p></div>
+      </div>
+    </div>`).join('');
+  $$('.flip-card', grid).forEach(c=>{
+    observeReveal(c);
+    if(isTouch){ c.addEventListener('click', ()=> c.classList.toggle('flipped')); }
+  });
+})();
+ 
+/* ======================================================================
+   6. ROAST CARDS
+   ====================================================================== */
+(function buildRoast(){
+  const grid = $('#roastGrid');
+  const rot = [-3,2,-1,3,-2,1];
+  grid.innerHTML = CONFIG.roasts.map((r,i)=>`<div class="roast-card glass" style="transform:rotate(${rot[i%rot.length]}deg) translateY(30px);"><span class="emoji">😏</span><p>${r}</p></div>`).join('');
+  $$('.roast-card', grid).forEach((c,i)=>{
+    c.classList.add('reveal');
+    const io = new IntersectionObserver(entries=>{
+      entries.forEach(en=>{
+        if(en.isIntersecting){
+          en.target.style.transition = 'opacity .6s var(--ease-out), transform .6s var(--ease-out)';
+          en.target.style.transitionDelay = (i*60)+'ms';
+          en.target.style.opacity = 1;
+          en.target.style.transform = `rotate(${rot[i%rot.length]}deg) translateY(0)`;
+          io.unobserve(en.target);
+        }
+      });
+    }, { threshold:0.2 });
+    io.observe(c);
+  });
+})();
+ 
+/* ======================================================================
+   7. FRIENDSHIP QUIZ
+   ====================================================================== */
+(function buildQuiz(){
+  const progressWrap = $('#quizProgress');
+  progressWrap.innerHTML = CONFIG.quiz.map(()=>'<span></span>').join('');
+  const dots = $$('span', progressWrap);
+  let qi = 0;
+  function renderQ(){
+    const q = CONFIG.quiz[qi];
+    $('#quizQ').textContent = q.q;
+    $('#quizOpts').innerHTML = q.opts.map(o=>`<button class="quiz-opt">${o}</button>`).join('');
+    dots.forEach((d,i)=> d.classList.toggle('done', i<qi));
+    $$('.quiz-opt').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        btn.classList.add('selected');
+        $$('.quiz-opt').forEach(b=> b.disabled = true);
+        setTimeout(()=>{
+          qi++;
+          if(qi < CONFIG.quiz.length){ renderQ(); }
+          else{
+            dots.forEach(d=>d.classList.add('done'));
+            $('#quizActive').style.display='none';
+            $('#quiz-result').classList.add('show');
+            if(window.confetti){
+              confetti({ particleCount:140, spread:90, origin:{y:0.6}, colors:['#34e4ea','#a06bff','#ff6bb3','#ffd27a'] });
+              setTimeout(()=> confetti({ particleCount:80, spread:120, origin:{y:0.4} }), 300);
+            }
+          }
+        }, 350);
+      });
+    });
+  }
+  renderQ();
+  $('#quizReplay').addEventListener('click', ()=>{
+    qi = 0;
+    $('#quiz-result').classList.remove('show');
+    $('#quizActive').style.display='block';
+    renderQ();
+  });
+})();
+ 
+/* ======================================================================
+   8. SECRET MESSAGE — hold heart 5s
+   ====================================================================== */
+(function secretMessage(){
+  const heart = $('#holdHeart'), circle = $('#holdHeart circle'), emoji = $('#heartEmoji'), hint = $('#holdHint');
+  const CIRC = 2*Math.PI*46;
+  circle.style.strokeDasharray = CIRC;
+  let holding = false, progress = 0, raf;
+  let unlocked = false;
+  function tick(){
+    if(holding && progress < 1){
+      progress += 1/(5*60); // ~5 seconds at 60fps
+      circle.style.strokeDashoffset = CIRC*(1-progress);
+      emoji.textContent = progress > 0.5 ? '💗' : '🤍';
+      raf = requestAnimationFrame(tick);
+      if(progress >= 1) unlock();
+    }
+  }
+  function unlock(){
+    if(unlocked) return;
+    unlocked = true;
+    holding = false;
+    emoji.textContent = '💖';
+    hint.textContent = 'unlocked';
+    const box = $('#letterBox');
+    box.classList.add('show');
+    typeLine($('#letterText'), CONFIG.secretLetter, 18);
+    if(window.confetti) confetti({ particleCount:60, spread:70, origin:{y:0.7}, colors:['#ff6bb3','#ffd27a'] });
+  }
+  function start(){ if(unlocked) return; holding = true; hint.textContent='keep holding...'; cancelAnimationFrame(raf); tick(); }
+  function stop(){ if(unlocked) return; holding = false; if(progress<1){ progress = 0; circle.style.strokeDashoffset = CIRC; emoji.textContent='🤍'; hint.textContent='press and hold'; } }
+  heart.addEventListener('pointerdown', start);
+  heart.addEventListener('pointerup', stop);
+  heart.addEventListener('pointerleave', stop);
+  heart.addEventListener('touchstart', e=>{ e.preventDefault(); start(); }, {passive:false});
+  heart.addEventListener('touchend', stop);
+})();
+ 
+/* ======================================================================
+   9. MEMORY JAR
+   ====================================================================== */
+(function memoryJar(){
+  const jar = $('#jarEl');
+  // scatter little note-shapes inside the jar visually
+  for(let i=0;i<10;i++){
+    const n = document.createElement('div');
+    n.className='jar-note';
+    n.style.left = (10+Math.random()*160)+'px';
+    n.style.top = (60+Math.random()*180)+'px';
+    n.style.transform = `rotate(${Math.random()*60-30}deg)`;
+    jar.appendChild(n);
+  }
+  let lastIdx = -1;
+  jar.addEventListener('click', ()=>{
+    let idx;
+    do{ idx = Math.floor(Math.random()*CONFIG.jarNotes.length); } while(idx===lastIdx && CONFIG.jarNotes.length>1);
+    lastIdx = idx;
+    const note = CONFIG.jarNotes[idx];
+    const reveal = $('#jarReveal');
+    reveal.classList.remove('show');
+    void reveal.offsetWidth; // reflow to restart transition
+    $('#jarTag').textContent = note.tag;
+    $('#jarText').textContent = note.text;
+    reveal.classList.add('show');
+    jar.style.transform = 'rotate(-4deg)';
+    setTimeout(()=> jar.style.transform = 'rotate(4deg)', 120);
+    setTimeout(()=> jar.style.transform = 'rotate(0deg)', 260);
+  });
+})();
+ 
+/* ======================================================================
+   10. MUSIC PLAYER — synthesized ambient pad (no external audio file needed)
+   ====================================================================== */
+(function musicPlayer(){
+  const playBtn = $('#playBtn'), fill = $('#volFill'), bar = $('#volBar');
+  let ctx, master, playing = false, nodes = [], progressRaf, startedAt = 0;
+  const LOOP_SECONDS = 24;
+  function initAudio(){
+    ctx = new (window.AudioContext||window.webkitAudioContext)();
+    master = ctx.createGain(); master.gain.value = 0.06; master.connect(ctx.destination);
+  }
+  function chord(freqs, at, dur){
+    freqs.forEach(f=>{
+      const o = ctx.createOscillator(); o.type='sine'; o.frequency.value = f;
+      const g = ctx.createGain(); g.gain.value = 0;
+      o.connect(g); g.connect(master);
+      g.gain.setValueAtTime(0, at);
+      g.gain.linearRampToValueAtTime(1, at+dur*0.3);
+      g.gain.linearRampToValueAtTime(0, at+dur);
+      o.start(at); o.stop(at+dur+0.1);
+      nodes.push(o);
+    });
+  }
+  function scheduleLoop(){
+    const now = ctx.currentTime;
+    const progressions = [
+      [261.6,329.6,392.0], [246.9,311.1,392.0], [220.0,277.2,349.2], [196.0,246.9,329.6]
+    ];
+    progressions.forEach((c,i)=> chord(c, now + i*(LOOP_SECONDS/4), LOOP_SECONDS/4 + 1.2));
+    startedAt = now;
+  }
+  function loopWatcher(){
+    if(!playing) return;
+    if(ctx.currentTime - startedAt > LOOP_SECONDS - 0.5) scheduleLoop();
+    const pct = ((ctx.currentTime - startedAt) % LOOP_SECONDS) / LOOP_SECONDS * 100;
+    fill.style.width = pct+'%';
+    progressRaf = requestAnimationFrame(loopWatcher);
+  }
+  playBtn.addEventListener('click', ()=>{
+    if(!ctx) initAudio();
+    if(ctx.state==='suspended') ctx.resume();
+    playing = !playing;
+    playBtn.textContent = playing ? '❚❚' : '▶';
+    if(playing){ scheduleLoop(); loopWatcher(); }
+    else{ cancelAnimationFrame(progressRaf); master.gain.setTargetAtTime(0, ctx.currentTime, 0.1); setTimeout(()=>{ if(!playing) master.gain.value = 0.06; },400); }
+  });
+  bar.addEventListener('click', e=>{
+    const rect = bar.getBoundingClientRect();
+    const pct = (e.clientX-rect.left)/rect.width;
+    master.gain && (master.gain.value = Math.max(0.01, Math.min(0.15, pct*0.15)));
+  });
+})();
+ 
+/* ======================================================================
+   11. INTERACTIVE NIGHT SKY
+   ====================================================================== */
+(function nightSky(){
+  const section = $('#night-sky-section');
+  const canvas = $('#night-canvas');
+  const ctx2 = canvas.getContext('2d');
+  let w,h, clickable = [], shooters = [];
+  function resize(){ w = canvas.width = section.offsetWidth; h = canvas.height = section.offsetHeight; }
+  resize(); window.addEventListener('resize', resize);
+  const staticStars = Array.from({length:90}, ()=>({ x:Math.random(), y:Math.random(), r:Math.random()*1.3+0.4, tw:Math.random()*Math.PI*2 }));
+ 
+  section.addEventListener('mousemove', e=>{
+    if(Math.random() < 0.06){
+      const rect = section.getBoundingClientRect();
+      shooters.push({
+        x: e.clientX-rect.left, y: e.clientY-rect.top,
+        vx: (Math.random()*4+3)*(Math.random()<0.5?1:-1), vy: Math.random()*2+1.5,
+        life: 1, clicked:false
+      });
+    }
+  });
+  section.addEventListener('click', e=>{
+    const rect = section.getBoundingClientRect();
+    const cx = e.clientX-rect.left, cy = e.clientY-rect.top;
+    let hit = false;
+    shooters.forEach(s=>{
+      if(!hit && Math.hypot(s.x-cx, s.y-cy) < 40 && s.life>0){
+        hit = true;
+        const box = $('#nightQuoteBox');
+        box.textContent = '"' + CONFIG.nightQuotes[Math.floor(Math.random()*CONFIG.nightQuotes.length)] + '"';
+        box.classList.add('show');
+        if(window.confetti) confetti({ particleCount:30, spread:50, origin:{ x:(e.clientX)/innerWidth, y:(e.clientY)/innerHeight }, colors:['#ffd27a','#34e4ea'] });
+      }
+    });
+  });
+ 
+  function draw(){
+    ctx2.clearRect(0,0,w,h);
+    staticStars.forEach(s=>{
+      s.tw += 0.02;
+      ctx2.beginPath();
+      ctx2.arc(s.x*w, s.y*h, s.r, 0, Math.PI*2);
+      ctx2.fillStyle = `rgba(255,255,255,${0.3+Math.sin(s.tw)*0.3})`;
+      ctx2.fill();
+    });
+    shooters = shooters.filter(s=> s.life>0);
+    shooters.forEach(s=>{
+      ctx2.beginPath();
+      ctx2.moveTo(s.x, s.y);
+      ctx2.lineTo(s.x - s.vx*6, s.y - s.vy*6);
+      const grad = ctx2.createLinearGradient(s.x,s.y,s.x-s.vx*6,s.y-s.vy*6);
+      grad.addColorStop(0, `rgba(255,255,255,${s.life})`);
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx2.strokeStyle = grad; ctx2.lineWidth = 2; ctx2.stroke();
+      s.x += s.vx; s.y += s.vy; s.life -= 0.02;
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+ 
+/* ======================================================================
+   12. ENDING SEQUENCE
+   ====================================================================== */
+(function ending(){
+  const els = [$('#moonEl'), ...$$('.ending-line'), $('.big-heart'), $('#finalSurpriseBtn')];
+  const io = new IntersectionObserver(entries=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){
+        els.forEach((el,i)=>{
+          setTimeout(()=>{
+            el.style.transition = 'opacity 1s var(--ease-out), transform 1s var(--ease-out)';
+            el.style.opacity = 1;
+            el.style.transform = 'translateY(0)';
+          }, i*350);
+        });
+        io.disconnect();
+      }
+    });
+  }, { threshold:0.4 });
+  io.observe($('#ending'));
+})();
+ 
+/* ======================================================================
+   13. FINAL SURPRISE
+   ====================================================================== */
+$('#finalSurpriseBtn').addEventListener('click', ()=>{
+  const overlay = $('#final-surprise');
+  overlay.classList.add('show');
+  $('#finalMsg').innerHTML = `<p id="finalTypeTarget"></p><button class="final-close" id="finalClose">close</button>`;
+  typeLine($('#finalTypeTarget'), CONFIG.finalMessage, 45);
+  $('#finalClose').addEventListener('click', ()=> overlay.classList.remove('show'));
+ 
+  const fc = $('#final-canvas');
+  const fctx = fc.getContext('2d');
+  fc.width = innerWidth; fc.height = innerHeight;
+  let floaters = Array.from({length:26}, ()=>({
+    x: Math.random()*fc.width, y: fc.height + Math.random()*fc.height,
+    r: Math.random()*10+6, sp: Math.random()*0.8+0.3, drift: Math.random()*0.6-0.3,
+    glyph: Math.random()<0.5 ? '💗' : (Math.random()<0.5?'✨':'💫')
+  }));
+  let running = true;
+  function loop(){
+    if(!running) return;
+    fctx.clearRect(0,0,fc.width,fc.height);
+    floaters.forEach(p=>{
+      p.y -= p.sp; p.x += p.drift;
+      if(p.y < -30){ p.y = fc.height+30; p.x = Math.random()*fc.width; }
+      fctx.font = p.r*2+'px sans-serif';
+      fctx.globalAlpha = 0.85;
+      fctx.fillText(p.glyph, p.x, p.y);
+    });
+    requestAnimationFrame(loop);
+  }
+  loop();
+ 
+  if(window.confetti){
+    const duration = 3000, end = Date.now()+duration;
+    (function frame(){
+      confetti({ particleCount:6, angle:60, spread:60, origin:{x:0}, colors:['#34e4ea','#a06bff','#ff6bb3','#ffd27a'] });
+      confetti({ particleCount:6, angle:120, spread:60, origin:{x:1}, colors:['#34e4ea','#a06bff','#ff6bb3','#ffd27a'] });
+      if(Date.now() < end) requestAnimationFrame(frame);
+    })();
+    setTimeout(()=> confetti({ particleCount:200, spread:160, origin:{y:0.5}, startVelocity:55 }), 400);
+  }
+  $('#finalClose').addEventListener('click', ()=>{ running = false; }, { once:true });
+});
+</script>
+</body>
+</html>
+ 
